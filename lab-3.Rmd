@@ -1,0 +1,84 @@
+---
+title: "lab-3 Transforming Seasonal Data into Stationary Time Series"
+author: "Thulasi-2348152"
+date: "2024-02-29"
+output: word_document
+---
+# Intoduction
+Time series data often exhibits patterns such as trends and seasonality, which can obscure underlying relationships and hinder accurate analysis. Transforming such data into a stationary format is crucial for extracting meaningful insights and building reliable models. In this analysis, we aim to demonstrate the process of transforming a seasonal dataset into a stationary time series suitable for in-depth analysis. By selecting appropriate methods to remove seasonality while preserving essential information, we ensure that the resulting time series is conducive to robust statistical modeling and forecasting.
+
+# Objectives
+To Demonstrate the transformation of a seasonal dataset into a stationary time series suitable for analysis. 
+
+# Data Description
+The Airline Passengers dataset describes the total number of airline passengers over a period of time.
+The units are a count of the number of airline passengers in thousands. There are 144 monthly observations from 1949 to 1960.
+
+
+
+```{r}
+library(readxl)
+airPassengers<- read_excel("C:/Users/Admin/Downloads/Dataset.xlsx")
+data=ts(airPassengers,start = 1949,frequency = 12)
+#checking the data class
+ts.plot(data)
+class(data)
+```
+
+From the plot,we can see an upward trend and there are patterns that repeat at regular intervals which says us seasonality existence.and also the pattern in the model increases with its width which tells that the model is a Multiplicative model.
+
+# Multiplicative to additive model
+```{r}
+ldata=ts(log(airPassengers),start = 1949,frequency = 12)
+ts.plot(ldata)
+class(ldata)
+
+```
+
+Now the repetition of pattern is constant over its width.Hence the model became additive model by using logarithm function over the data.
+
+# Seasonal Differencing
+```{r}
+diff1=diff(ldata,lag=12)
+ts.plot(diff1)
+```
+
+From the graph we can clearly observe that seasonality is removed 
+```{r}
+acf(diff1)
+
+```
+
+Since most of  the lines lies outside the threshold line,Stationarity doesn't exists in our model.We will conform with adf test.
+### Augmented Dickey-Fuller Test
+* $H_0$:Time series is non-stationary
+* $H_1$:Time series is stationary
+
+```{r}
+library(tseries)
+adf.test(diff1)
+```
+
+Since p value 0.09 >0.05,we fail to reject our null hypothesis and Hence the model is non-stationarity model.
+
+# Second Differencing
+```{r}
+diff2=diff(diff1)
+ts.plot(diff2)
+acf(diff2)
+```
+
+Since most of  the lines lies between the threshold line,Stationarity exists in our model.We will conform with adf test
+### Augmented Dickey-Fuller Test
+* $H_0$:Time series is non-stationary
+* $H_1$:Time series is stationary
+```{r}
+adf.test(diff2)
+```
+
+Since p-value 0.01<0.05,we reject our null hypothesis and Hence the model is Stationarity model
+
+# Conclusion
+The analysis began with visual exploration, revealing an upward trend and clear seasonal patterns in the air passenger data. To make the model suitable for analysis, a transition from a multiplicative to an additive model was made by applying a logarithmic transformation. Seasonal differencing was then implemented to eliminate the seasonality observed in the data. The resulting second differenced series exhibited stationarity, as confirmed by both graphical analysis and the Augmented Dickey-Fuller (ADF) test. 
+
+

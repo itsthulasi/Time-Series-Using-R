@@ -1,0 +1,63 @@
+---
+title: "Lab-8 Time Series Forecasting of Airline Miles Redemption using Holt's Exponential Smoothing"
+author: "Thulasi-2348152"
+date: "2024-04-18"
+output: word_document
+---
+# Introduction
+Holt's Method: Holt extended simple exponential smoothing to handle data with trends. In Holt's exponential smoothing, two smoothing parameters are introduced: one for the level of the series (alpha) and another for the trend (beta). The method involves two equations: one for updating the level and another for updating the trend.
+Forecast[t+h] = Level[t] + h * Trend[t]
+
+# Objectives
+* To  Demonstration of Holt's Exponential Smoothing
+* To find In-sample Forecasting
+* 3-Step Ahead Forecasting
+* Accuracy Assessment
+
+```{r}
+library(astsa)
+data=airmiles
+ts.plot(data)
+```
+
+From the plot,we can clearly see an upward trend and there is no repetitive patterns,Hence no seasonality.
+
+```{r}
+library(forecast)
+forecast=HoltWinters(data,gamma=FALSE)
+forecast$fitted
+```
+
+Holt's Exponential Smoothing has been applied to capture the underlying trend in the time series data and generate forecasts for each year. The interpretation of the results provides insights into the estimated level, trend, and forecasted values at different points in the time series.
+
+```{r}
+plot(forecast)
+```
+
+
+The fitted red line likely represents the smoothed and forecasted values obtained using Holt-Winters filtering.The observed black line represents the actual data points.both lines are not deviating much,it indicates it is good for future predictions.
+
+```{r}
+forecast
+```
+
+Here alpha =0.80 which is closer to value 1 indicates that the prediction is depended on the recent observation.Hence it has high weightage for recent values in time series.
+
+```{r}
+forecast_data=forecast(forecast,h=3) # h=3,predicts next 3 obs in blue color
+plot(forecast_data)
+```
+
+The three dots in the graph is the 3-step ahead forecast .There is a light blue shaded area surrounding these squares, suggesting a confidence interval or range for these forecasts.
+
+```{r}
+accuracy(forecast_data)
+
+```
+
+
+ME (Mean Error): The average difference between actual and forecasted values. Positive ME indicates overestimation, negative indicates underestimation.Here ME=293.75 which indicates that the model tends to overestimate the target values.
+RMSE (Root Mean Squared Error): The square root of the average squared differences between actual and forecasted values. Lower values indicate better accuracy.Here RMSE=1063.42 which is higher value and Hence accuracy level is less.
+
+# Conclusion
+we utilized Holt's Exponential Smoothing to forecast airline miles redemption. Our analysis revealed a close match between the forecasted trends and the actual data, indicating the model's ability to capture underlying patterns effectively. However, we observed a tendency for the model to slightly overestimate future redemption, suggesting the need for further refinement. We heavily relied on recent data for predictions, emphasizing short-term trends in our forecasts. Moving forward, we plan to refine our method and consider additional factors to improve the accuracy of our predictions.

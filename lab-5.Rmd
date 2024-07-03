@@ -1,0 +1,96 @@
+---
+title: "Lab-5 Time Series Analysis and Modeling of Ocean Temperature Trends"
+author: "Thulasi-2348152"
+date: "2024-03-16"
+output: word_document
+---
+# Introduction 
+
+The ARMA (Autoregressive Moving Average) model is a technique used in time series analysis to understand and predict future values based on past observations. It combines autoregression (AR) and moving average (MA) components to capture dependencies within the data. ARMA models, denoted as ARMA(p, q), where "p" is the order of autoregression and "q" is the order of the moving average, are valuable for forecasting and identifying underlying patterns in time series data.
+
+# Objective
+To Choose a non seasonal time series data set. 
+
+* Fit a suitable ARMA model for describing the patterns in the model.
+* To examining the ACF and PACF plot of the stationary data 
+* To Fit the suitable model and check the best fitted model for the given data
+
+# Data Description
+The gtemp_ocean dataset provides annual sea surface temperature anomalies for the global mean ocean. These anomalies are calculated by averaging temperature deviations over the open ocean (areas that remain ice-free at all times). The dataset spans from 1880 to 2021 and consists of 142 data points. 
+
+```{r}
+library(astsa)
+data=gtemp_ocean
+ts.plot(data)
+```
+
+From the ts plot ,it depicts the general upward trend over the period of time.Clearly there is no Seasonality as There are no patterns that repeat at regular intervals
+
+```{r}
+acf(data)
+```
+
+From the graph we see that after lag 0 the the autocorrelation gradually decreases to zero.Which tells us that our the time series does not follows stationarity.
+
+### Augmented Dickey-Fuller Test
+* $H_0$:Time series is non-stationary
+* $H_1$:Time series is stationary
+
+```{r}
+library(tseries)
+adf.test(data)
+```
+
+From adf test,p-value 0.63>0.50 so we fail to reject our null-hypothesis and hence it is non-stationary model.
+
+# First Order Differencing
+```{r}
+diffdata=diff(data)
+ts.plot(diffdata)
+```
+
+
+```{r}
+# H0:Trend Non-stationary
+# H1:Trend Stationary
+library(tseries)
+adf.test(diffdata)
+```
+
+We removed the trend from the data by computing the differences between consecutive observations.From adf test the P value is less than 0.05,we reject our null hypothesis of adf test.Therefore,The time series follows Stationarity after 1st differencing.
+
+
+```{r}
+acf(diffdata)
+```
+
+Since the lags are significant till lag 2,We may tell this is MA(2) model.
+```{r}
+pacf(diffdata)
+```
+
+From PACF plot ,we see the plot is significant till lag2 and Hence it may be AR(2)model.
+```{r}
+library(forecast)
+auto.arima(diffdata)
+```
+
+ARIMA(0,0,2) is the best ARIMA model for a given time series dataset with AIC=-228.06.But now we will check for AR(2) and ARMA(2,2) model also.
+
+```{r}
+ar=arima(diffdata,order=c(2,0,0))
+ar
+```
+
+ARIMA(2,0,0) model for a given time series data set with AIC=-218.46.
+
+```{r}
+arma=arima(diffdata,order=c(2,0,2))
+arma
+```
+ARMA(2,0,2) has AIC=-224.44.
+Clearly by comparing all three model,ARMA(0,2) has least AIC value.
+
+# Conclusion:
+
+Initially, the data lacked stationarity, confirmed by the Augmented Dickey-Fuller (ADF) test. However, after applying first-order differencing, the series achieved stationarity. Comparing the AIC values of the ARMA(0,0,2), ARMA(2,0,0), and ARMA(2,0,2) models, the ARIMA(0,0,2) model emerged with the lowest AIC value of -228.06. Thus, the ARIMA(0,0,2) model, equivalent to an ARMA(0,2) model, is deemed the most suitable for the dataset. It is represented as $ z_t=a_t+0.4256a_{t-1}+0.3093a_{t-2}$.

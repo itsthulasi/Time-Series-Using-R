@@ -1,0 +1,100 @@
+---
+title: "Lab-9 Analysis of Gas Demand using SARIMA Model"
+author: "Thulasi-2348152"
+date: "2024-05-02"
+output: word_document
+---
+# Introduction
+SARIMA, or Seasonal Autoregressive Integrated Moving Average, is a forecasting model designed for time series data with both trend and seasonal patterns. It extends the non-seasonal ARIMA model by incorporating seasonal components. SARIMA includes parameters for autoregressive, differencing, and moving average components, as well as seasonal orders to capture seasonal patterns. By combining these elements, SARIMA provides a flexible framework for modeling and predicting complex time series data.
+# Objective
+* To Fit a suitable SARIMA model for describing the patterns in the model
+* Examine the Residual Analysis for the best fitted model.
+
+# Data Description
+This data is about the gas demand from 1960 to 1975 in brazil
+```{r}
+library(readxl)
+gasdemand_1_ <- read_excel("C:/Users/Admin/Downloads/gasdemand (1).xlsx")
+data=ts(gasdemand_1_,start=1960,frequency = 12)
+ts.plot(data)
+```
+
+Overall upward trend and seasonality pattern is followed.
+```{r}
+library(forecast)
+auto.arima(data)
+```
+SARIMA(2,1,3)(0,1,1) has AIC value =3619.19
+# Seasonal Differencing
+```{r}
+diff=diff(data,lag=12)
+auto.arima(diff)
+```
+# First order Differncing
+```{r}
+diff1=diff(data)
+auto.arima(diff1)
+```
+SARIMA(2,1,3)(0,1,1) has least AIC value than SARIMA(2,0,3)(0,0,1)
+Hence SARIMA(2,1,3)(0,1,1) is the best model
+```{r}
+# Fit SARIMA model
+sarima_model <- arima(data, order = c(2,0,3), seasonal = list(order = c(0,0,1), period = 12))
+
+# Summary of the SARIMA model
+summary(sarima_model)
+```
+
+```{r}
+# Fit SARIMA model
+sarima_model <- arima(data, order = c(2,1,3), seasonal = list(order = c(0,1,1), period = 12))
+
+# Summary of the SARIMA model
+summary(sarima_model)
+```
+## Residual Analysis
+
+### Shapiro-Wilk Test
+* $H_0$:The residuals are normally distributed
+* $H_1$:The residuals are not normally distributed.
+
+```{r}
+resid=residuals(sarima_model)
+shapiro.test(resid)
+```
+
+Since P-value 0.09>0.05 ,we reject our Ho and Hence residuals follows normality.
+### Ljung-Box Test
+* $H_0$:The residuals are independently distributed (no autocorrelation).
+* $H_1$:The residuals are not independently distributed (autocorrelation is present).
+
+```{r}
+Box.test(resid,lag=5)
+```
+pvalue 0.99 >0.05,we accept ho and hence residuals are not autocorrelated.
+
+### White Test
+* $H_0$:The residuals exhibit constant variance (homoscedasticity)
+* $H_1$:The residuals do not exhibit constant variance (heteroscedasticity).
+
+
+```{r}
+library(tseries)
+white.test(resid)
+```
+
+
+
+
+
+ p-value 0.88>0.05,we accept ho and hence residuals have constant variance.
+ 
+# Conclusion
+The SARIMA(2,1,3)(0,1,1) model was found to be the most suitable for describing the patterns in the gas demand time series data. It captured both the trend and seasonal patterns effectively, as evidenced by its relatively low AIC value compared to alternative models.
+
+Residual analysis confirmed that the model's residuals satisfied key assumptions:
+- Normality: The Shapiro-Wilk test indicated that the residuals followed a normal distribution, as the p-value (0.09) was greater than the significance level of 0.05.
+- Independence: The Ljung-Box test showed no evidence of autocorrelation in the residuals, as the p-value (0.99) exceeded 0.05.
+- Constant Variance: The White test suggested that the residuals exhibited constant variance, with a p-value (0.88) greater than 0.05.
+
+Overall, the SARIMA(2,1,3)(0,1,1) model provided a satisfactory fit to the gas demand data and could be used for forecasting future gas demand with reasonable accuracy.

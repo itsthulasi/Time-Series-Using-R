@@ -1,0 +1,215 @@
+---
+title: "Lab-2 Transforming Wheat Production Time Series into Stationary Data"
+author: "Thulasi-2348152"
+date: "2024-02-22"
+output: word_document
+---
+# Introduction:
+Time series analysis is a fundamental tool in understanding and forecasting data that varies over time. In this analysis, we will focus on wheat production data spanning from 1966 to 2017, measured in thousands of tons. The aim is to explore methods such as differencing, ordinary least squares (OLS), and moving average smoothing to extract a stationary version of the data. Stationarity is crucial for many time series analysis techniques, as it ensures that statistical properties such as mean and variance remain constant over time.
+
+# Objectives
+The aim is to make the wheat production time series stationary by applying differencing, OLS regression, and moving average smoothing techniques.
+
+Differencing: Remove trends
+
+OLS Regression: Fit a linear trend to detrended data.
+
+Moving Average Smoothing: Reduce noise and highlight trends.
+
+# Data Description
+The wheat production data consists of yearly measurements from 1966 to 2017, totaling 52 observations. Each observation represents the annual wheat production in thousands of tons. 
+
+```{r}
+library(readxl)
+wheatdata <- read_excel("C:/Users/Admin/Downloads/wheatdata.xlsx")
+data=ts(wheatdata,start = 1966,frequency = 1)
+#checking the data class
+class(data)
+ts.plot(wheatdata,ylab='WHEAT PRODUCTION (1000 tons)',xlab='Time')
+```
+
+The depicts the general upward trend over the period of time.Clearly there is no Seasonality as There are no patterns that repeat at regular intervals and there are unpredictable variations in the data that do not fit the other components tell the irregular Movements.
+```{r}
+acf(data)
+```
+
+From the graph we see that after lag 0 the the autocorrelation gradually decreases to zero.Which tells us that our the time series does not follows stationarity.
+
+# First Order Differencing
+```{r}
+diffdata=diff(data)
+diffdata
+ts.plot(diffdata)
+# H0:Trend Non-stationary
+# H1:Trend Stationary
+library(tseries)
+adf.test(diffdata)
+```
+
+We removed the trend from the data by computing the differences between consecutive observations.From adf test the P value is less than 0.05,we reject our null hypothesis of adf test.Therefore,The time series follows Stationarity after 1st differencing.
+
+# Moving Average
+```{r}
+library(forecast)
+ma1=ma(data,order=3)
+ma2=ma(data,order=5)
+ma3=ma(data,order=7)
+ma4=ma(data,order=9)
+par(mfrow=c(2,2))
+ts.plot(ma1,main="3 POINT MA")
+ts.plot(ma2,main="5 POINT MA")
+ts.plot(ma3,main="7 POINT MA")
+ts.plot(ma4,main="9 POINT MA")
+```
+
+The estimation of the graph gets smoother with increase in order of t-point moving average smoothing, and also the number of observation also decreases.
+```{r}
+error1=data-ma1
+error2=data-ma2
+error3=data-ma3
+error4=data-ma4
+par(mfrow=c(2,2))
+ts.plot(error1)
+ts.plot(error2)
+ts.plot(error3)
+ts.plot(error4)
+```
+
+From the error plot we observe that with increase in Moving average time point ,the model becomes Stationarity model.
+
+# Ordinary Least Square Method
+
+```{r}
+# Wheat production data
+wheat_production <- c(170, 162, 248, 321, 318, 293, 306, 282, 315, 369, 379, 389, 388, 418, 398, 452, 493, 543, 621, 643, 510, 627, 652, 590, 663, 669, 746, 820, 840, 757, 804, 733, 862, 929, 924, 1011, 784, 952, 810, 904, 910, 976, 927, 940, 919, 898, 998, 989, 742, 1022, 1016, 1041)
+
+# Years corresponding to the data (1966 to 2017)
+years <- 1966:2017
+
+# Create a data frame with years and wheat production
+data <- data.frame(Year = years, Wheat_Production = wheat_production)
+ts.plot(wheat_production)
+
+```
+
+From the graph we can clearly see only two bends,Which tells us that polynomial degree of order two will be fit model.But will we check for Order one also by fitting the Model
+
+# Polynomial Degree of Order 1
+```{r}
+
+# Perform OLS regression
+ols_model <- lm(Wheat_Production ~ Year, data = data)
+
+# Print summary of the regression
+summary(ols_model)
+
+```
+
+Intercept and Year: The intercept is -32810 (approx.), meaning the model predicts this value for wheat production when the year is zero. The coefficient for the year is 16.81, indicating that for each additional year, wheat production increases by about 16.81 thousand tons.
+
+Significance: Both the intercept and year are highly significant (p < 0.001), suggesting a strong relationship between the year and wheat production.
+
+Fit: The model explains about 91.34% of the variance in wheat production (Multiple R-squared), and this figure remains high (91.17%) even after adjusting for the number of predictors (Adjusted R-squared).
+
+```{r}
+reg=resid(ols_model)
+ts.plot(reg)
+acf(reg)
+
+
+```
+
+From the acf plot we can observe that most the lines lies between the threshold line except at lag 1 and 2.Which tells our model is Non-stationary model.However we verify it by using adf test.
+```{r}
+adf.test(reg)
+
+```
+
+Since our p value is greater than 0.05 so we fail to reject our null hypothesis and Hence the model is Non-stationary.Now,we check if the assumptions of the model are satisfied or not.
+
+```{r}
+fit=fitted.values(ols_model)
+plot(fit,rstudent(ols_model),col='purple',ylim=c(-4, 4))
+abline(0,0,col='green')
+```
+
+From above plot we get a horizontal banked values which shows that there exist linearity and variance is also constant and there is even no outliers .
+```{r}
+library(lmtest)
+bptest(ols_model)
+```
+
+Confirming variance with bp test which fetches a p value more than 0.05 so we fail to reject null hypothesis and hence we have constant variance .
+
+```{r}
+shapiro.test(reg)
+```
+
+shapiro.test that fetches a p value less than 0.05 hence fail to reject null hypothesiss ,there is  no normality.
+Since the model violates our assumption of normality.We will try to fit the model with next degree of order two.
+
+# Polynomial Degree of Order Two
+```{r}
+# Perform OLS regression
+ols_model1 <- lm(Wheat_Production ~ Year+I(Year^2), data = data)
+
+# Print summary of the regression
+summary(ols_model1)
+```
+
+Clearly,all the variables are significant. R^2 of 0.9397,which tells our model is good fit and p-value of 2.2e-16 which is less than 0.05 ,says that our model is significant.
+
+```{r}
+reg1=resid(ols_model1)
+ts.plot(reg1)
+acf(reg1)
+
+```
+
+From the acf plot,we see that all the lies within the threshold lines which says that our model is a stationary model.
+
+### Augmented Dickey-Fuller Test
+* $H_0$:Time series is non-stationary
+* $H_1$:Time series is stationary
+
+```{r}
+adf.test(reg1)
+```
+
+From the adf test,p-value of 0.055 which is almost equal to 0.05 ,hence we reject our $  H_0$ and our model is Stationary.
+
+```{r}
+fit=fitted.values(ols_model1)
+plot(fit,rstudent(ols_model1),col='purple',ylim=c(-4, 4))
+abline(0,0,col='green')
+```
+
+From above plot we get a horizontal banked values which shows that there exist linearity and variance is also constant and there is even no outliers .
+
+### Homoscedasticity using Breusch Pagan test
+
+* The null hypothesis ($H _0$): The variance of the errors is constant (homoscedasticity).
+
+* Alternative Hypothesis ($H1$): The variance of the errors is not constant (heteroscedasticity)
+```{r}
+library(lmtest)
+bptest(ols_model1)
+```
+
+Since P-Value is greater than 0.05,we fail to reject null hypothesis.Hence the residuals have constant variance
+
+### Normality of errors using Shapiro-Wilk test
+
+* The null hypothesis ($H _0$):The errors (residuals) in the regression model are normally distributed in the population.
+
+* Alternative Hypothesis ($H1$):The errors (residuals) in the regression model are not normally distributed in the population.
+```{r}
+shapiro.test(reg1)
+```
+
+Since P-Value is greater than 0.05,we fail to reject null hypothesis.Hence the residuals follows normality.
+ 
+# Conclusion
+
+We observed that Model of degree order 1,whose residuals followed non-stationarity violated the normality assumption and the Model of degree order 2 whose residual followed stationarity and assumptions of the model.Hence we conclude that Whenever the residual of the model follows stationary,through OLS method we can fit the model which also satisfies our assumptions of the model.If the model is not stationary,the model violates the assumptions of the model.We can if the time series follows stationarity or not through acf plot and adf test.Differencing of the time series model help us to remove trend and Seasonality and Moving average helps us smoothing the plot for finding the pattern.
+

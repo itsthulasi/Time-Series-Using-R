@@ -1,0 +1,145 @@
+---
+title: "Lab-7 Time Series Analysis of Temperature Deviations Using ARIMA Modeling"
+author: "Thulasi-2348152"
+date: "2024-03-28"
+output:
+  word_document: default
+  html_document: default
+---
+## Introduction
+
+### ARIMA Model:
+
+ARIMA is a powerful framework that incorporates three key components: Autoregression (AR), Differencing (I), and Moving Average (MA). \
+* Autoregression (AR): This component models the relationship between an observation and a number of lagged observations (its own past values).\
+* Differencing (I): This involves differencing the series to make it stationary, removing trends or seasonality that might affect the model's performance.\
+* Moving Average (MA): This component models the dependency between an observation and a residual error from a moving average model applied to lagged observations.\
+ARIMA models are especially useful for non-stationary time series data, where trends or seasonality might be present.
+
+### ARMA Model:
+
+ARMA is a simpler version of ARIMA, consisting of Autoregression (AR) and Moving Average (MA) components.\
+* Autoregression (AR): As with ARIMA, this component models the relationship between an observation and a number of lagged observations.\
+* Moving Average (MA): Similarly, this component models the dependency between an observation and a residual error from a moving average model.\
+ARMA models are typically applied to stationary time series data, where trends and seasonality have been removed beforehand.
+
+## Objectives
+* Fit Suitable ARIMA Model
+* Differencing the data
+* Suitable ARMA Model Selection
+* Fit Selected ARMA Model
+* Residual Analysis for Best-Fit Model
+
+## Data Desciption
+The xgloptemp dataset contains 136 observations. It measures temperature deviations in degrees Celsius for the years 1880 to 2015.
+
+```{r}
+library(astsa)
+Dataset=xglobtemp
+class(Dataset)
+ts.plot(Dataset)
+```
+```{r}
+# Decompose the time series
+df=ts(Dataset,start = 1749,frequency = 12)
+decomposed <- decompose(df)
+
+# Plot the original time series and its components
+plot(decomposed)
+```
+
+There is overall general increasing trend and no seasonlaity.
+```{r}
+acf(Dataset,lag=50)
+```
+
+From the acf plot we see that the data is non stationary since all the lags lies beyond the threshold
+limit.
+
+### Augmented Dickey-Fuller Test
+* $H_0$:Time series is non-stationary
+* $H_1$:Time series is stationary
+```{r}
+library(tseries)
+adf.test(Dataset)
+```
+
+P-value 0.73>0.05 we accept Ho .Hence the ts is non-stationary model.
+```{r}
+library(forecast)
+auto.arima(Dataset)
+```
+ARIMA(1,1,3) here Order of AR(p) is 1,order of differencing d is 1 and order of MA(q) is 3.d=1,tell us that our model will become stationary after order 1 differencing.
+
+## First Order Differencing
+```{r}
+diffdata=diff(Dataset)
+acf(diffdata)
+```
+
+There is one significant lag at lag 1.Which tell that the model may be MA(1).
+```{r}
+pacf(diffdata)
+```
+
+There are three signjficant lags and hence it may be AR(3)model.
+```{r}
+library(forecast)
+auto.arima(diffdata)
+```
+
+The AIC of ARMA(1,3) is -234.12.Now we will check the AIC of AR(1) and MA(3).
+```{r}
+ar1=arima(diffdata,order=c(1,0,0))
+ar1
+```
+
+ARMA(1,0) has -218.16 AIC value.
+```{r}
+ma3=arima(diffdata,order=c(0,0,3))
+ma3
+```
+
+AIC of MA(3) model is -230.93.
+ARMA(1,3) has the least AIC value .Hence we will choose it has our best model.
+
+## Residual Analysis
+
+### Shapiro-Wilk Test
+* $H_0$:The residuals are normally distributed
+* $H_1$:The residuals are not normally distributed.
+
+```{r}
+library(lmtest)
+fit=arima(order=c(1,0,3),diffdata)
+residual=resid(fit)
+shapiro.test(residual)
+```
+
+Since P-value 0.26>0.05 ,we reject our Ho and Hence residuals follows normality.
+
+### Ljung-Box Test
+* $H_0$:The residuals are independently distributed (no autocorrelation).
+* $H_1$:The residuals are not independently distributed (autocorrelation is present).
+
+```{r}
+Box.test(residual,lag=4)
+```
+pvalue 0.90 >0.05,we accept ho and hence residuals are not autocorrelated.
+
+### White Test
+* $H_0$:The residuals exhibit constant variance (homoscedasticity)
+* $H_1$:The residuals do not exhibit constant variance (heteroscedasticity).
+
+```{r}
+white.test(residual)
+```
+
+ p-value 0.86>0.05,we accept ho and hence residuals have constant variance.
+
+## Conclusion 
+In this analysis, we explored the temperature deviations dataset using ARIMA modeling techniques. The data exhibited an overall increasing trend with no apparent seasonality. After confirming non-stationarity using the Augmented Dickey-Fuller Test,From fitting the ARIMA(P,D,Q) we got P=1,D=1 and Q=3 SO,we applied first-order differencing to achieve stationarity.
+
+The autocorrelation function (ACF) and partial autocorrelation function (PACF) plots suggested potential AR(3) and MA(1) models, respectively. We used the auto.arima function to select the best model based on the lowest AIC value, which turned out to be ARMA(1,3).
+
+Residual analysis confirmed that the selected ARMA(1,3) model adequately captured the underlying patterns in the data. The Shapiro-Wilk test indicated that the residuals followed a normal distribution, while the Ljung-Box test and White test demonstrated that the residuals were independent and exhibited constant variance, respectively.

@@ -1,0 +1,50 @@
+---
+title: "lab-1 Time Series Analysis of Monthly Shampoo Sales"
+author: "Thulasi-2348152"
+date: "2024-02-15"
+output: word_document
+---
+# Introduction
+This report presents a time series analysis of monthly shampoo sales. Time series analysis is a statistical technique that deals with time series data, or trend analysis. Time series data means that data is in a series of particular time periods or intervals. The data is considered in three types: Time series data, cross-sectional data, and pooled data. This analysis will provide insights into the sales trend over time and help with future sales forecasting.
+
+# Objectives
+The main objectives of this analysis are:
+
+To understand the components of the time series data of monthly shampoo sales.
+To discuss the mathematical model suitable for the data.
+To analyze the behavior of the autocorrelation function plot.
+To assess the impact of logarithmic transformation on achieving stationarity of the dataset.
+
+# Data Description
+The data consists of monthly shampoo sales over a period of three years. The data is a time series, with time-stamped observations recorded at regular intervals (monthly).
+```{r}
+library(readr)
+shampoo_sales <- read_csv("C:/Users/Admin/Downloads/archive (4)/shampoo_sales.csv")
+data=ts(shampoo_sales,start = 2000,frequency = 12)
+data
+class(data)
+ts.plot(shampoo_sales)
+```
+The graph represents “Shampoo Sales” over “Time”. It shows a general upward trend, indicating an increase in shampoo sales over time.
+
+```{r}
+acf(data)
+```
+The ACF is highest at lag 0 and decreases as the lag increases, indicating that sales are most strongly correlated with recent sales. This suggests that past sales data could be useful for predicting future sales. However, the ACF does not drop to zero quickly, suggesting that the sales data may not be stationary and might exhibit a trend or seasonality. 
+
+
+```{r}
+data1=log(data)
+class(data1)
+ts.plot(data1)
+```
+There are fluctuations, but overall, the data exhibits an increasing trend over time. This suggests that whatever is being measured has been generally increasing during this period.
+
+```{r}
+acf(data1)
+```
+
+we observe that the majority of the lags are positioned above the threshold line, indicating a notable autocorrelation. This suggests a correlation between the time series and its lagged versions. Moreover, the pattern indicates that the process is non-random and non-stationary, as evidenced by the slow decrease in the autocorrelation function (ACF). Consequently, employing a logarithmic transformation does not assist in achieving stationarity for this dataset.
+
+# CONCLUSION:
+The time series plot was analyzed and determined to be non-stationary. In an attempt to achieve stationarity, a log transformation was applied. However, it was observed that the logarithmic transformation did not succeed in rendering the dataset stationary.

@@ -1,0 +1,74 @@
+---
+title: "Lab-4 Analysis of AR(1), AR(2), and MA(3) Time Series Processes"
+author: "Thulasi-2348152"
+date: "2024-03-09"
+output: word_document
+---
+
+# Introduction
+In time series analysis, understanding the underlying processes that generate data is crucial for making accurate predictions and inferences. Autoregressive (AR) and Moving Average (MA) models are fundamental tools in this domain, allowing us to characterize the temporal dependencies present in a dataset. In this report, we explore the properties of AR(1), AR(2), and MA(3) processes through simulation and analysis of their autocorrelation and partial autocorrelation functions.
+
+
+# Objective
+* To Generate AR(1) and AR(2) processes and comment about acf and pacf
+* To Generate MA(3) and comment about its stationarity.
+
+# AR(1)
+```{r}
+AR1=arima.sim(model=list(ar=0.2),n=1000)
+acf(AR1)
+```
+
+From the ACF plot,we can see that at lag 1 it is significant and after which its becomes oscillatory.It is also stationary.
+
+```{r}
+pacf(AR1)
+```
+
+From PACF plot,it is significant at lag 1.Which tells that our model is AR model of order 1 AR(1) which suggests that the current value of the time series is influenced by its immediate past value..Also here $\phi1=0.2$ < 1 which tells that our model is stationary.
+
+# AR(2)
+```{r}
+AR2=arima.sim(model=list(ar=c(0.2,0.5)),n=1000)
+acf(AR2)
+```
+
+From the ACF plot,we can see that plot exponentially decreases to zero.
+
+```{r}
+pacf(AR2)
+```
+
+from the pcf plot,we can see significant spike till lag 2 which suggests that the current value of the time series is influenced by its immediate two past value.After lag 2,the plot is not significant.
+
+## 2. Generate an MA(3) process of size 500. Is the process stationary? Comment on its acf and pacf plots.
+```{r}
+MA3=arima.sim(model = list(ma=c(-0.2,0.1,0.4)),n=500)
+ts.plot(MA3)
+```
+
+```{r}
+acf(MA3)
+```
+
+From the acf plot,there is a significant spike at lag 3,suggests that is MA(3) model.
+
+```{r}
+pacf(MA3)
+```
+
+We see a oscillatory pattern from the plot and also $\phi1+\phi2+\phi3=-0.2+0.1+0.4=0.3<1$,which statisfy the condition for stationarity,We can say that MA3 is a stationary model.Now,we will conform about the stationarity through adf test.
+
+## ADF TEST
+* $H_0$:Time series is non-stationary
+* $H_1$:Time series is stationary
+```{r}
+library(tseries)
+adf.test(MA3)
+```
+Since the p-value is less than 0.05,we reject out null hypothesis $H_0$.Hence MA3 model is a stationary model.
+
+# Conclusion
+The analysis provided valuable insights into the behavior of AR and MA processes. The simulation results demonstrated the importance of parameter selection in maintaining stationarity. For the AR(1) and AR(2) processes, significant autocorrelation at lag 1 and 2 respectively indicated the influence of past values on the current observation. In contrast, the MA(3) process exhibited oscillatory behavior in its partial autocorrelation function, confirming the presence of three significant spikes corresponding to the three lagged terms.
+
+
